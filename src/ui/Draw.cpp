@@ -105,8 +105,10 @@ void drawSuccesedConnectScreen()
 
 void drawTahometr()
 {
-  float one_persent = max_rpm / 10;
-  int rpm_persent = (rpm / one_persent);
+  // max_rpm приходит из настроек ядра; нулевое значение не должно ронять
+  // делением на ноль.
+  float one_persent = (max_rpm > 0) ? (max_rpm / 10.0f) : 1.0f;
+  int rpm_persent = (one_persent > 0.0f) ? static_cast<int>(rpm / one_persent) : 0;
 
   for (int i = 1; i <= 10; i++)
   {
