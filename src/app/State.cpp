@@ -85,7 +85,7 @@ String optins_name[5] = {
     "",
 };
 
-int optins_var[5] = {-1, 19, 90, -1, -1};
+int optins_var[5] = {-1, 19, 90, 0, -1};
 int optins_action[5] = {4, 2, 3, 6, 5};
 
 bool opt_click_plus = false;

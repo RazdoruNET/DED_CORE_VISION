@@ -203,6 +203,13 @@ void begin() {
 }
 
 void exit() {
+  // Выход из игры не должен терять новый рекорд.
+  if (game_score_1 > game_best) {
+    game_best = game_score_1;
+    preferences.putInt("game_best", game_best);
+    runtime.gameBest = game_best;
+  }
+
   game_mode = false;
   screen_index = SCREEN_DASHBOARD;
   runtime.screen = SCREEN_DASHBOARD;
