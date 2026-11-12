@@ -267,8 +267,10 @@ void update(float dt) {
 
     if (item.type == ITEM_COIN) {
       game_score_1 += 100;
+      gameAlert("+100", 190);
     } else if (item.type == ITEM_NITRO) {
       game_score_1 += 250;
+      gameAlert("N2O +250", 150);
     } else {
       game_state = 2;
       // Дорога замирает: кадр аварии не должен «ехать» дальше.
