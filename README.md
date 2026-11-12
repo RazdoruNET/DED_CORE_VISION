@@ -1,5 +1,7 @@
 # DED CORE VISION
 
+[![build](https://github.com/RazdoruNET/DED_CORE_VISION/actions/workflows/build.yml/badge.svg)](https://github.com/RazdoruNET/DED_CORE_VISION/actions/workflows/build.yml)
+
 Дисплей-модуль приборки для **[DED CORE V4](https://github.com/RazdoruNET/DED_CORE_V4)**.
 Плата — **JC4827W543**: ESP32-S3-N4R8, 4.3″ TFT 480×272 (NV3041A, QSPI), ёмкостный тач GT911.
 
