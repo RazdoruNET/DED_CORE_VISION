@@ -1,5 +1,7 @@
 #include "app/State.h"
 
+#include <Arduino_GFX_Library.h>
+
 #include "config/CONFIG.h"
 #include "config/PINS.h"
 
@@ -76,15 +78,15 @@ int mh = 0;
 int odometr = 0;
 
 String optins_name[5] = {
-    "< LOCK THE SCREEN",
-    "< WHEEL RADIUS",
-    "< BACKLIGHT BRIGHTNESS",
-    "",
+    "< БЛОКИРОВКА ЭКРАНА",
+    "< РАДИУС КОЛЕСА",
+    "< ЯРКОСТЬ ПОДСВЕТКИ",
+    "< ИГРА",
     "",
 };
 
 int optins_var[5] = {-1, 19, 90, -1, -1};
-int optins_action[5] = {4, 2, 3, 1, 5};
+int optins_action[5] = {4, 2, 3, 6, 5};
 
 bool opt_click_plus = false;
 bool opt_click_minus = false;
@@ -125,3 +127,5 @@ uint8_t game_state = 0;
 float game_offset = 0;
 float game_spawn = 0.8f;
 float game_time = 0;
+
+unsigned long displayTestUntil = 0;

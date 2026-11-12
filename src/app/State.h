@@ -138,4 +138,8 @@ extern float game_offset;
 extern float game_spawn;
 extern float game_time;
 
+// Пока millis() меньше этого значения, loop() не перерисовывает приборку:
+// портал показывает тестовую заливку дисплея.
+extern unsigned long displayTestUntil;
+
 #endif // APP_STATE_H

@@ -1,5 +1,7 @@
 #include "display/Touch.h"
 
+#define TOUCH_MODULES_GT911
+#define TOUCH_MODULE_ADDR GT911_SLAVE_ADDRESS1
 #include <TouchLib.h>
 #include <Wire.h>
 

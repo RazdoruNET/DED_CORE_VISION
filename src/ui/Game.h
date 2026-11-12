@@ -22,7 +22,7 @@ enum GameItemType : uint8_t {
   ITEM_COIN,
 };
 
-namespace game {
+namespace gameui {
 
 // Экран приглашения и старт заезда.
 void attract();
@@ -47,6 +47,6 @@ void drawFrame();
 void drawItems();
 void drawHud();
 
-}  // namespace game
+}  // namespace gameui
 
 #endif // UI_GAME_H

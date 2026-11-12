@@ -1,9 +1,12 @@
 #include "ui/TouchLogic.h"
 
+#include <Arduino_GFX_Library.h>
 #include <WiFi.h>
 
 #include "app/State.h"
 #include "config/CONFIG.h"
+#include "config/PINS.h"
+#include "display/Display.h"
 #include "display/Touch.h"
 #include "net/CoreLink.h"
 #include "net/SetupPortal.h"
@@ -102,7 +105,7 @@ void touchOptionsHandle()
         if (has_game_point)
         {
           next_senser_tap = micros() + 500000;
-          game::begin();
+          gameui::begin();
         }
         else if (has_opt_exit_point)
         {
@@ -118,7 +121,7 @@ void touchOptionsHandle()
             {
               optins_var[2] += 10;
               preferences.putInt("light", optins_var[2]);
-              analogWrite(GFX_BL, 2.5 * optins_var[2]);
+              display::setBacklight(static_cast<uint8_t>(optins_var[2]));
             }
           }
         }
@@ -132,7 +135,7 @@ void touchOptionsHandle()
             {
               optins_var[2] -= 10;
               preferences.putInt("light", optins_var[2]);
-              analogWrite(GFX_BL, 2.5 * optins_var[2]);
+              display::setBacklight(static_cast<uint8_t>(optins_var[2]));
             }
           }
         }
@@ -452,7 +455,7 @@ void gameTouchHandle()
   // каждые 50 мс, пока палец на экране.
   if (!gameTouchDown)
   {
-    game::handleTouch(touch_last_x, touch_last_y);
+    gameui::handleTouch(touch_last_x, touch_last_y);
     gameTouchDown = true;
     last_game_touch_x = touch_last_x;
   }
@@ -466,7 +469,7 @@ void gameTouchHandle()
 
   if (abs(dx) > 40 && next_senser_tap < micros())
   {
-    game::handleSwipe(dx < 0 ? -1 : 1);
+    gameui::handleSwipe(dx < 0 ? -1 : 1);
     next_senser_tap = micros() + 250000;
     last_game_touch_x = touch_last_x;
   }

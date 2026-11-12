@@ -533,10 +533,10 @@ void drawOptionMenu()
 {
   gfx->fillRect(426,0,54,280, RED);
   gfx->setTextSize(1);
-  gfx->setFont(u8g2_font_spleen8x16_mf);
+  gfx->setFont(u8g2_font_crox2hb_tf);
   gfx->setTextColor(COLOR_WHITE);
   gfx->setCursor(438, 140);  
-  gfx->println("EXIT");
+  gfx->println("ВЫХОД");
 }
 
 void drawTransmition()
@@ -719,6 +719,7 @@ void drawOptions()
   for (int i = 1; i <= cont; i++)
   {
     gfx->drawLine(0, i*height_item, width-60, i*height_item, 0x31A6);
+    gfx->setFont(u8g2_font_crox2hb_tf);
     gfx->setTextSize(1);
     gfx->setTextColor(0x4208);
     gfx->setCursor(240, i*height_item-22); 
@@ -736,7 +737,7 @@ void drawOptions()
           gfx->setTextSize(1);
           gfx->setTextColor(COLOR_WHITE);
           gfx->setCursor(70, i*height_item-22); 
-          gfx->println("CLICK TO LOCK");
+          gfx->println("ЗАБЛОКИРОВАТЬ");
 
           break;
 
@@ -755,7 +756,7 @@ void drawOptions()
 
           gfx->setTextSize(1);
           gfx->setCursor(30, i*height_item-22); 
-          gfx->println("CLICK TO ACTIVATE WIFI");
+          gfx->println("ПОРТАЛ НАСТРОЙКИ");
 
           if (opt_click_info)
           {
@@ -770,7 +771,7 @@ void drawOptions()
 
           gfx->setTextSize(1);
           gfx->setCursor(270, i*height_item-22); 
-          gfx->println("INFO");
+          gfx->println("ИНФО");
 
           if (opt_click_bw)
           {
@@ -785,7 +786,7 @@ void drawOptions()
 
           gfx->setTextSize(1);
           gfx->setCursor(370, i*height_item-22); 
-          gfx->println("B/W");
+          gfx->println("Ч/Б");
 
           break;
 
@@ -841,6 +842,16 @@ void drawOptions()
 
           gfx->setCursor(196, i*height_item-18); 
           gfx->println("+");
+
+          break;
+
+          case 6:
+
+          gfx->fillRect(10, (i-1)*height_item+5, 220, height_item-10, 0x2480);
+          gfx->setTextSize(1);
+          gfx->setTextColor(COLOR_WHITE);
+          gfx->setCursor(34, i*height_item-16);
+          gfx->println("ИГРАТЬ  >");
 
           break;
 
@@ -980,7 +991,7 @@ void game()
   
   // Предметы едут по дороге под машиной. Рисуем их до треугольников, чтобы
   // ближние перекрывались силуэтом машины.
-  game::drawItems();
+  gameui::drawItems();
 
   // Очки и разгон считаются только во время заезда: на экране приглашения
   // счёт должен стоять на нуле.

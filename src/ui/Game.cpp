@@ -1,8 +1,10 @@
 #include "ui/Game.h"
 
 #include <U8g2lib.h>
+#include <esp_random.h>
 
 #include "app/State.h"
+#include "app/Status.h"
 #include "config/CONFIG.h"
 #include "display/Display.h"
 #include "ui/Draw.h"
@@ -129,7 +131,7 @@ void drawItem(const GameItem &item) {
 
   switch (item.type) {
     case ITEM_CONE:
-      gfx->fillTriangle(p.x, top, p.x + w / 2, p.y, p.x - w / 2, p.y, ORANGE);
+      gfx->fillTriangle(p.x, top, p.x + w / 2, p.y, p.x - w / 2, p.y, 0xFD20);
       gfx->fillRect(p.x - w / 5, top + h / 2, w * 2 / 5, h / 7, WHITE);
       break;
 
@@ -177,7 +179,7 @@ void drawItem(const GameItem &item) {
 
 }  // namespace
 
-namespace game {
+namespace gameui {
 
 void attract() {
   game_mode = true;
@@ -262,6 +264,8 @@ void update(float dt) {
       game_score_1 += 250;
     } else {
       game_state = 2;
+      // Дорога замирает: кадр аварии не должен «ехать» дальше.
+      game_speed = 0.0f;
 
       if (game_score_1 > game_best) {
         game_best = game_score_1;
@@ -406,4 +410,4 @@ void drawFrame() {
   gfx->flush();
 }
 
-}  // namespace game
+}  // namespace gameui
