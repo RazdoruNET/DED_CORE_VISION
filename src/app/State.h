@@ -67,25 +67,25 @@ extern bool active_option_click;
 extern bool active_quiqshifter;
 extern bool active_quiqshifter_click;
 extern bool use_quiqshifter;
-extern int last_quickshifter_click;
-extern int last_option_click;
-extern int unlock_sense;
+extern uint32_t last_quickshifter_click;
+extern uint32_t last_option_click;
+extern uint32_t unlock_sense;
 extern int has_opt_point_test;
-extern int next_senser_tap;
+extern uint32_t next_senser_tap;
 
 // --- КПП, квикшифтер, скорость, одометр -------------------------------------
 extern int t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9;
 extern int kpp;                 // -1 нет передачи, 0 нейтраль, 1…6 передача
 extern bool init_kpp;
 extern int last_kpp;
-extern int quiqshifter;
+extern uint32_t quiqshifter;   // 0 — отсечка не активна
 extern int sensetive_qshifter;
 extern float dlinna;            // длина окружности колеса, м
 extern int speed;
 extern int speed_draw;
 extern int last_speed_sense;
-extern float speed_meter_time;
-extern int start_engin;
+extern uint32_t speed_meter_time;
+extern uint32_t start_engin;
 extern int mh;
 extern int odometr;
 
@@ -103,8 +103,8 @@ extern bool opt_click_light_minus;
 
 // --- Свайпы ----------------------------------------------------------------
 extern bool swipe;
-extern int swipe_start;
-extern int swipe_time;
+extern uint32_t swipe_start;
+extern uint32_t swipe_time;
 extern int swipe_x;
 extern int swipe_y;
 extern int swipe_x_old;
@@ -117,7 +117,7 @@ extern int swipe_left;
 extern int swipe_right;
 extern int swipe_up;
 extern int swipe_down;
-extern int swipe_sleep;
+extern uint32_t swipe_sleep;
 
 // --- Игра -------------------------------------------------------------------
 extern bool game_mode;

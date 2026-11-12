@@ -3,6 +3,7 @@
 #include <driver/gpio.h>
 
 #include "app/State.h"
+#include "app/Time.h"
 #include "config/CONFIG.h"
 
 void sensorsBegin() {
@@ -62,7 +63,7 @@ void kppHandler() {
       digitalWrite(t_7, HIGH);
       use_quiqshifter = true;
     }
-  } else if (quiqshifter > 0 && quiqshifter < micros()) {
+  } else if (quiqshifter != 0 && timeReached(quiqshifter)) {
     quiqshifter = 0;
 
     if (kpp > -1) {
@@ -83,10 +84,10 @@ void speedMeterHandler() {
   const int senser = digitalRead(t_8);
 
   if (senser == HIGH && last_speed_sense != senser) {
-    const float diff_pic = micros() - speed_meter_time;
+    const uint32_t diff_pic = micros() - speed_meter_time;
 
     if (diff_pic > 10000) {
-      const float rpm_sp = 3600000000.0f / diff_pic;
+      const float rpm_sp = 3600000000.0f / static_cast<float>(diff_pic);
 
       odometr += dlinna * 1000;
 

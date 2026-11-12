@@ -4,6 +4,7 @@
 #include <WiFi.h>
 
 #include "app/State.h"
+#include "app/Time.h"
 #include "config/CONFIG.h"
 #include "config/PINS.h"
 #include "display/Display.h"
@@ -35,7 +36,7 @@ clickPoint_t qshift_point = {245, 0, 325, 75};
 
 void touchQShiftHandle()
 {
-  if (next_senser_tap < micros())
+  if (timeReached(next_senser_tap))
   {
     if (!active_quiqshifter_click)
     {
@@ -44,7 +45,7 @@ void touchQShiftHandle()
         next_senser_tap = micros() + 500000;
         active_quiqshifter_click = true;
 
-        if (last_quickshifter_click < micros())
+        if (timeReached(last_quickshifter_click))
         {
           active_quiqshifter = !active_quiqshifter;
           last_quickshifter_click = micros() + 500000;
@@ -73,7 +74,7 @@ clickPoint_t game_point = {10, 167, 230, 211};
 
 void touchOptionsHandle()
 {
-  if (next_senser_tap < micros())
+  if (timeReached(next_senser_tap))
   {
     if (!active_option_click)
     {
@@ -211,7 +212,7 @@ void touchOptionsHandle()
         next_senser_tap = micros() + 500000;
         active_option_click = true;
 
-        if (last_option_click < micros())
+        if (timeReached(last_option_click))
         {
           active_option = !active_option;
           last_option_click = micros() + 500000;
@@ -258,7 +259,7 @@ void touchUnlockHandle()
     }
     else
     {
-      int time = micros() - unlock_sense;
+      uint32_t time = micros() - unlock_sense;
       //Serial.println("time");
       //Serial.println(time);
       if (time > 1000000)
@@ -316,11 +317,11 @@ void touchCardMenuHandle()
 
 void swipeSense()
 {
-  if (next_senser_tap < micros())
+  if (timeReached(next_senser_tap))
   {
     swipe_time = micros();
 
-    if (swipe_start - swipe_time < 500)
+    if (static_cast<uint32_t>(swipe_start - swipe_time) < 500)
     {
       if (touch_last_x < 228 && touch_last_y > 80)
       {
@@ -337,7 +338,7 @@ void swipeSense()
 
           swipe = true;
 
-          if (micros() - swipe_sleep > swipe_sleep_time)
+          if (static_cast<uint32_t>(micros() - swipe_sleep) > static_cast<uint32_t>(swipe_sleep_time))
           {
             toggle_left = !toggle_left;
             preferences.putBool("toggle_left", toggle_left);
@@ -361,7 +362,7 @@ void swipeSense()
 
           swipe = true;
 
-          if (micros() - swipe_sleep > swipe_sleep_time)
+          if (static_cast<uint32_t>(micros() - swipe_sleep) > static_cast<uint32_t>(swipe_sleep_time))
           {
             toggle_left = !toggle_left;
             preferences.putBool("toggle_left", toggle_left);
@@ -392,7 +393,7 @@ void swipeSense()
 
           swipe = true;
 
-          if (micros() - swipe_sleep > swipe_sleep_time)
+          if (static_cast<uint32_t>(micros() - swipe_sleep) > static_cast<uint32_t>(swipe_sleep_time))
           {
             toggle_right = !toggle_right;
             preferences.putBool("toggle_right", toggle_right);
@@ -416,7 +417,7 @@ void swipeSense()
 
           swipe = true;
 
-          if (micros() - swipe_sleep > swipe_sleep_time)
+          if (static_cast<uint32_t>(micros() - swipe_sleep) > static_cast<uint32_t>(swipe_sleep_time))
           {
             toggle_right = !toggle_right;
             preferences.putBool("toggle_right", toggle_right);
@@ -467,7 +468,7 @@ void gameTouchHandle()
 
   const int16_t dx = touch_last_x - last_game_touch_x;
 
-  if (abs(dx) > 40 && next_senser_tap < micros())
+  if (abs(dx) > 40 && timeReached(next_senser_tap))
   {
     gameui::handleSwipe(dx < 0 ? -1 : 1);
     next_senser_tap = micros() + 250000;

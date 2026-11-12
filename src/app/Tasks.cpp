@@ -40,7 +40,7 @@ void rpmHandler() {
   static bool wasRunning = false;
 
   if (rpm > 0) {
-    const int nmh = (micros() / 1000) - start_engin;
+    const uint32_t nmh = micros() / 1000 - start_engin;
 
     if (nmh > 1000) {
       mh += nmh;
