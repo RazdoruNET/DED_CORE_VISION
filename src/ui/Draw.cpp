@@ -654,8 +654,14 @@ void drawINFO()
   gfx->println("DLINNA WH: " + String(dlinna*1000));
 
 
+  gfx->setCursor(250, 195);
+  gfx->println("LINK: " + String(runtime.linkOnline ? "ON" : "OFF") + " / " + String(runtime.frames));
+
   gfx->setCursor(250, 215);
   gfx->println("SENSER: " + String(digitalRead(t_8)));
+
+  gfx->setCursor(250, 235);
+  gfx->println("CORE: " + runtime.coreHost);
 }
 
 void drawPower()
