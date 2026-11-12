@@ -71,6 +71,7 @@ void touch_init(int16_t w, int16_t h, uint8_t rotation) {
   delay(200);
 
   Wire.begin(PIN_TOUCH_SDA, PIN_TOUCH_SCL);
+  Wire.setClock(400000);
   touch.init();
 
   Serial.println("TOUCH: GT911 инициализирован");
