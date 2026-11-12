@@ -30,31 +30,32 @@ void drawWellcomeScreen()
 void drawInitialScreen()
 {
   gfx->fillScreen(COLOR_BLACK);
+  gfx->setFont(u8g2_font_crox2hb_tf);
   gfx->setTextSize(1);
   gfx->setTextColor(COLOR_WHITE);
 
   if (itin_step == 0)
-  {  
-    gfx->setCursor(145, 105);
-    gfx->println(F("SWITCH YOU DED BOX TO RECOVERY"));
+  {
+    gfx->setCursor(96, 105);
+    gfx->println(F("ОТКРОЙТЕ МОДУЛИ - НАЙТИ МОДУЛЬ"));
 
-    gfx->setCursor(150, 125);
-    gfx->println(F("I'AM SEARCH DED RECOVERY WIFI"));
+    gfx->setCursor(118, 125);
+    gfx->println(F("ИЩУ СЕТЬ СОПРЯЖЕНИЯ DED_PAIR_*"));
   }
   else if (itin_step == 1)
   {
-    gfx->setCursor(180, 125);
-    gfx->println(F("CONNECT TO DEVICE"));
+    gfx->setCursor(178, 125);
+    gfx->println(F("ПОДКЛЮЧЕНИЕ К ЯДРУ"));
   }
   else if (itin_step == 2)
   {
-    gfx->setCursor(140, 125);
-    gfx->println(F("PLEASE WAIT TO SYNCHRONIZING DEVICES"));
+    gfx->setCursor(150, 125);
+    gfx->println(F("СИНХРОНИЗАЦИЯ С ЯДРОМ"));
   }
   else if (itin_step == 3)
   {
-    gfx->setCursor(145, 125);
-    gfx->println(F("SYNCHRONIZING DEVICES IS COMPLITED"));
+    gfx->setCursor(190, 125);
+    gfx->println(F("ГОТОВО"));
   }
 
   gfx->flush();
