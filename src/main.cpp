@@ -275,6 +275,11 @@ void setup() {
   display::begin();
   display::setBacklight(static_cast<uint8_t>(optins_var[2]));
 
+  // Короткая проверка панели при включении: если полос нет, проблема в
+  // шлейфе или питании, а не в прошивке.
+  display::testPattern();
+  delay(250);
+
   drawWellcomeScreen();
 
   touch_init(SCREEN_WIDTH, SCREEN_HEIGHT, 0);
