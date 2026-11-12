@@ -9,6 +9,7 @@ uint16_t COLOR_BLACK = BLACK;
 uint16_t COLOR_WHITE = WHITE;
 
 int screen_index = SCREEN_DASHBOARD;
+int itin_step = 0;
 
 bool coreOnline = false;
 bool coreStale = false;
@@ -21,6 +22,7 @@ int max_rpm = 12000;
 int max_cart_rpm = 12000;
 int init_angle = 0;
 int power = 0;
+int power_draw = 100;
 int micro = 0;
 float angles[22] = {0};
 float rpms[22] = {0};

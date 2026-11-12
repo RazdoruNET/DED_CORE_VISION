@@ -24,6 +24,10 @@ extern uint16_t COLOR_WHITE;
 // --- Экран ------------------------------------------------------------------
 extern int screen_index;
 
+// Шаг подключения для стартового экрана: 0 поиск ядра, 1 подключение,
+// 2 синхронизация, 3 готово.
+extern int itin_step;
+
 // --- Связь с ядром ----------------------------------------------------------
 // coreOnline — кадр телеметрии не старше LINK_TIMEOUT_MS.
 // coreStale — связь уже была, но кадры пропали: рисуем «DED BOX OFFLINE».
@@ -39,6 +43,7 @@ extern int max_rpm;
 extern int max_cart_rpm;
 extern int init_angle;      // угол на первом обороте карты
 extern int power;           // throttle, %
+extern int power_draw;      // сглаженное значение для полосы мощности
 extern int micro;           // micros() ядра
 extern float angles[22];
 extern float rpms[22];
