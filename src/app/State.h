@@ -124,6 +124,7 @@ extern bool game_mode;
 extern int game_score_1;
 extern int game_score_1_tik;
 extern float game_speed;
+extern int game_speed_step;   // порог очков для следующего SPEED UP
 extern int alert_tik;
 extern int alert_x;
 extern String alert_value;

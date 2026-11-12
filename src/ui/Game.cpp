@@ -194,6 +194,7 @@ void attract() {
   game_score_1 = 0;
   game_score_1_tik = 0;
   game_speed = 0.15f;
+  game_speed_step = 500;
   alert_tik = 0;
   game_time = 0;
   game_spawn = 0.8f;

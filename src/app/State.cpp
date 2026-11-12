@@ -117,6 +117,7 @@ bool game_mode = false;
 int game_score_1 = 0;
 int game_score_1_tik = 0;
 float game_speed = 0.15f;
+int game_speed_step = 500;
 int alert_tik = 0;
 int alert_x = 0;
 String alert_value = "";

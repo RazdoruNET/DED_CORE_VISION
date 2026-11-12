@@ -1013,9 +1013,12 @@ void game()
       game_score_1 += 100;
       gameAlert("+100", 190);
 
-      if (game_score_1 % 500 == 0)
+      // Порог, а не остаток: бонус может перескочить 500, и ускорение
+      // потерялось бы.
+      if (game_score_1 >= game_speed_step)
       {
         game_speed += 0.05;
+        game_speed_step += 500;
         gameAlert("SPEED UP", 150);
       }
 
