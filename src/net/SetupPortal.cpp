@@ -112,7 +112,11 @@ SetupPortal &SetupPortal::instance() {
   return portal;
 }
 
-void SetupPortal::begin() {
+void SetupPortal::begin(bool manual) {
+  if (manual) {
+    manual_ = true;
+  }
+
   if (!active_) {
     // AP+STA: портал может быть открыт, пока модуль уже подключён к ядру,
     // и терять этот линк из-за настройки нельзя.
@@ -148,6 +152,7 @@ void SetupPortal::stop() {
 
   WiFi.softAPdisconnect(true);
   active_ = false;
+  manual_ = false;
 
   Serial.println("SETUP: портал закрыт");
 }

@@ -147,7 +147,9 @@ void updateLinkState() {
       Serial.println("CORE: телеметрия пошла");
       Settings::instance().setFailedBoots(0);
 
-      if (SetupPortal::instance().active()) {
+      // Портал, открытый вручную из OPTIONS, не закрываем: владелец сам
+      // нажал «Портал настройки».
+      if (SetupPortal::instance().active() && !SetupPortal::instance().manual()) {
         SetupPortal::instance().stop();
       }
     }

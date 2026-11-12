@@ -14,11 +14,14 @@ class SetupPortal {
 public:
   static SetupPortal &instance();
 
-  void begin();
+  // manual=true — портал открыт кнопкой из OPTIONS и не закрывается сам,
+  // когда связь с ядром появилась.
+  void begin(bool manual = false);
   void loop();
   void stop();
 
   bool active() const { return active_; }
+  bool manual() const { return manual_; }
 
   void requestPairing();
   bool takePairingRequest();
@@ -40,6 +43,7 @@ private:
 
   bool started_ = false;
   bool active_ = false;
+  bool manual_ = false;
 
   bool pairingRequested_ = false;
   String pairingStatus_;

@@ -173,7 +173,7 @@ void touchOptionsHandle()
           opt_click_wifi = true;
 
           // Точка доступа портала: в V4 отдельного recovery-режима нет.
-          SetupPortal::instance().begin();
+          SetupPortal::instance().begin(true);
           screen_index = 0;
         }
         else if (has_wheel_plus_point)
