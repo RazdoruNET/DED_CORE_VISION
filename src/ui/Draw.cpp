@@ -1051,7 +1051,7 @@ void game()
       gfx->drawLine(cx - size_w, cy + size_h, cx + size_w, cy + size_h, 0x59E3);
   }
 
-  gfx->fillRect(mot_x, mot_y, 100, 100, COLOR_BLACK);
+  gameui::drawCar(mot_x + 50);
 }
 
 

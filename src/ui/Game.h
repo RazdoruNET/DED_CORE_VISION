@@ -45,6 +45,7 @@ void drawFrame();
 
 // Вызываются из game() в ui/Draw.cpp, чтобы предметы легли под машину.
 void drawItems();
+void drawCar(int centerX);
 void drawHud();
 
 }  // namespace gameui

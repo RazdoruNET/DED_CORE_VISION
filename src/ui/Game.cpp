@@ -356,6 +356,34 @@ void drawItems() {
   }
 }
 
+// Машина игрока. Заводская game() оставляла на её месте чёрный квадрат
+// 100x100 — рисуем в том же боксе силуэт в цвете полосы.
+void drawCar(int centerX) {
+  static const uint16_t kLaneColor[3] = {0x2480, BLUE, RED};
+
+  const int w = 56;
+  const int h = 58;
+  const int y = 204;
+  const int x = centerX - w / 2;
+  const uint16_t body = kLaneColor[game_lane];
+
+  gfx->fillCircle(centerX, y + h - 2, w / 2, 0x2104);
+
+  gfx->fillRoundRect(x, y, w, h, 8, body);
+
+  gfx->fillRect(x + 6, y + 4, w - 12, 10, BLACK);
+  gfx->fillRect(x + 8, y + 24, w - 16, 16, 0x0210);
+  gfx->fillRect(x + 10, y + 26, w - 20, 12, 0x9CFF);
+
+  gfx->fillRect(x - 4, y + 10, 7, 16, BLACK);
+  gfx->fillRect(x + w - 3, y + 10, 7, 16, BLACK);
+  gfx->fillRect(x - 4, y + h - 18, 7, 14, BLACK);
+  gfx->fillRect(x + w - 3, y + h - 18, 7, 14, BLACK);
+
+  gfx->fillRect(x + 6, y + h - 6, 14, 4, RED);
+  gfx->fillRect(x + w - 20, y + h - 6, 14, 4, RED);
+}
+
 void drawHud() {
   static const uint16_t kLaneColor[3] = {0x2480, BLUE, RED};
 
