@@ -364,6 +364,18 @@ String SetupPortal::buildPage() const {
   page += String(runtime.frames);
   page += "</td></tr>";
 
+  page += "<tr><td>Память</td><td>";
+  page += String(ESP.getFreeHeap()) + " / " + String(ESP.getHeapSize());
+  page += "</td></tr>";
+
+  page += "<tr><td>PSRAM</td><td>";
+  page += String(ESP.getFreePsram());
+  page += "</td></tr>";
+
+  page += "<tr><td>WiFi RSSI</td><td>";
+  page += String(WiFi.RSSI()) + " dBm";
+  page += "</td></tr>";
+
   page += "</table>";
 
   page += "<form method=\"post\" action=\"/save\">";
@@ -422,7 +434,10 @@ String SetupPortal::buildStatusJson() const {
   json += "\"gear\":" + String(runtime.gear) + ",";
   json += "\"screen\":" + String(runtime.screen) + ",";
   json += "\"best\":" + String(runtime.gameBest) + ",";
-  json += "\"frames\":" + String(runtime.frames);
+  json += "\"frames\":" + String(runtime.frames) + ",";
+  json += "\"heap\":" + String(ESP.getFreeHeap()) + ",";
+  json += "\"psram\":" + String(ESP.getFreePsram()) + ",";
+  json += "\"rssi\":" + String(WiFi.RSSI());
   json += "}}";
 
   return json;
