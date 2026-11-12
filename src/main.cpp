@@ -308,8 +308,8 @@ void setup() {
 
   xTaskCreatePinnedToCore(TaskTouchCode, "Touch", 8000, nullptr, 1, nullptr, 1);
   xTaskCreatePinnedToCore(TaskKppCode, "Kpp", 3000, nullptr, 1, nullptr, 0);
-  xTaskCreatePinnedToCore(TaskSpeedCode, "Speed", 2000, nullptr, 1, nullptr, 0);
-  xTaskCreatePinnedToCore(TaskRpmCode, "Rpm", 2048, nullptr, 1, nullptr, 1);
+  xTaskCreatePinnedToCore(TaskSpeedCode, "Speed", 4096, nullptr, 1, nullptr, 0);
+  xTaskCreatePinnedToCore(TaskRpmCode, "Rpm", 4096, nullptr, 1, nullptr, 1);
   xTaskCreatePinnedToCore(TaskDrawPropCode, "DrawProp", 1024, nullptr, 1, nullptr, 0);
 
   g_wifiDownSince = millis();
