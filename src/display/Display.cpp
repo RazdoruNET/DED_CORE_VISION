@@ -23,9 +23,12 @@ void begin() {
   pinMode(PIN_GFX_BL, OUTPUT);
   digitalWrite(PIN_GFX_BL, LOW);
 
-  if (!gfx->begin()) {
-    Serial.println("DISPLAY: панель не ответила");
-  }
+  const bool ok = gfx->begin();
+
+  Serial.printf("DISPLAY: %s, PSRAM %u из %u байт\n",
+                ok ? "панель ok" : "панель не ответила",
+                static_cast<unsigned>(ESP.getFreePsram()),
+                static_cast<unsigned>(ESP.getPsramSize()));
 
   gfx->fillScreen(BLACK);
   gfx->flush();
