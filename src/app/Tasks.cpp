@@ -33,19 +33,36 @@ void rpmHandler() {
     }
   }
 
+  // Моточасы копим в RAM и пишем в NVS не чаще раза в минуту. Заводская
+  // прошивка писала каждую секунду — это ~86 тыс. циклов в сутки и убитый NVS.
+  static uint32_t lastSaveMs = 0;
+  static bool mhDirty = false;
+  static bool wasRunning = false;
+
   if (rpm > 0) {
     const int nmh = (micros() / 1000) - start_engin;
 
     if (nmh > 1000) {
-      const int old_mh_h = preferences.getInt("mh_h", 0);
-
-      mh = nmh + old_mh_h;
-
-      preferences.putInt("mh_h", mh);
-
+      mh += nmh;
+      mhDirty = true;
       start_engin = 0;
+
+      if (lastSaveMs == 0 || static_cast<uint32_t>(millis() - lastSaveMs) >= 60000) {
+        preferences.putInt("mh_h", mh);
+        lastSaveMs = millis();
+        mhDirty = false;
+      }
     }
+
+    wasRunning = true;
   } else {
+    // Двигатель заглох — сохраняем накопленное сразу.
+    if (wasRunning && mhDirty) {
+      preferences.putInt("mh_h", mh);
+      mhDirty = false;
+    }
+
+    wasRunning = false;
     start_engin = 0;
   }
 }
