@@ -91,10 +91,17 @@ void speedMeterHandler() {
 
       odometr += dlinna * 1000;
 
-      const int old_odom = preferences.getInt("odometr", 0);
+      // Одометр в метрах. Пишем в NVS раз в километр, а не на каждый импульс:
+      // заводская прошивка делала запись каждые ~1,5 м и убивала флеш.
+      static int savedOdometer = -1;
 
-      if (odometr - old_odom > 1000) {
+      if (savedOdometer < 0) {
+        savedOdometer = preferences.getInt("odometr", 0);
+      }
+
+      if (odometr - savedOdometer >= 1000000 || odometr < savedOdometer) {
         preferences.putInt("odometr", odometr);
+        savedOdometer = odometr;
       }
 
       speed = rpm_sp * dlinna;

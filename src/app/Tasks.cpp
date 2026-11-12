@@ -33,8 +33,8 @@ void rpmHandler() {
     }
   }
 
-  // Моточасы копим в RAM и пишем в NVS не чаще раза в минуту. Заводская
-  // прошивка писала каждую секунду — это ~86 тыс. циклов в сутки и убитый NVS.
+  // Моточасы копим в RAM и пишем в NVS раз в 5 минут и на остановке.
+  // Заводская прошивка писала каждую секунду — это ~86 тыс. циклов в сутки.
   static uint32_t lastSaveMs = 0;
   static bool mhDirty = false;
   static bool wasRunning = false;
@@ -47,7 +47,7 @@ void rpmHandler() {
       mhDirty = true;
       start_engin = 0;
 
-      if (lastSaveMs == 0 || static_cast<uint32_t>(millis() - lastSaveMs) >= 60000) {
+      if (lastSaveMs == 0 || static_cast<uint32_t>(millis() - lastSaveMs) >= 300000) {
         preferences.putInt("mh_h", mh);
         lastSaveMs = millis();
         mhDirty = false;
