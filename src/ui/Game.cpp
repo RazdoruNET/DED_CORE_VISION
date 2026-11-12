@@ -16,6 +16,10 @@ constexpr int kMaxItems = 24;
 GameItem items[kMaxItems];
 int itemCount = 0;
 
+// После входа в игру палец ещё лежит на кнопке OPTIONS: короткая пауза,
+// чтобы этот же тап не запустил заезд.
+uint32_t s_startGuardUntil = 0;
+
 // Позиции полос игрока совпадают с mot_x заводской game(): 60 / 190 / 320.
 constexpr int kLaneX[3] = {60, 190, 320};
 
@@ -195,6 +199,8 @@ void attract() {
   game_spawn = 0.8f;
   game_lane = 1;
   clearItems();
+
+  s_startGuardUntil = millis() + 400;
 }
 
 void begin() {
@@ -294,15 +300,23 @@ void update(float dt) {
 }
 
 void handleTouch(int16_t x, int16_t y) {
-  if (game_state == 0 || game_state == 2) {
+  // Выход — правый верхний угол, в том числе с экрана приглашения.
+  if (y < 26 && x > 425) {
+    exit();
+    return;
+  }
+
+  if (game_state == 0) {
+    if (static_cast<int32_t>(millis() - s_startGuardUntil) < 0) {
+      return;
+    }
+
     begin();
     return;
   }
 
-  // Выход — правый верхний угол.
-  if (y < 26 && x > 425) {
-    exit();
-    game_spawn = 0;
+  if (game_state == 2) {
+    begin();
     return;
   }
 

@@ -106,7 +106,7 @@ void touchOptionsHandle()
         if (has_game_point)
         {
           next_senser_tap = micros() + 500000;
-          gameui::begin();
+          gameui::attract();
         }
         else if (has_opt_exit_point)
         {
