@@ -394,7 +394,7 @@ String SetupPortal::buildPage() const {
   page += "<button type=\"submit\">Сохранить</button></form>";
 
   page += "<a class=\"btn\" href=\"/pair\">Найти ядро сопряжением</a>";
-  page += "<a class=\"btn ghost\" href=\"/led/test\">Проверить светодиоды</a>";
+  page += "<a class=\"btn ghost\" href=\"/display/test\">Проверить дисплей</a>";
   page += "<a class=\"btn ghost\" href=\"/update\">Обновление прошивки</a>";
 
   page += "<form method=\"post\" action=\"/reset\" onsubmit=\"return confirm('Сбросить настройки ядра?')\">";
