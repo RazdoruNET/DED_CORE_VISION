@@ -28,6 +28,14 @@ String htmlMessage(const String &text) {
          "<p><a style=\"color:#6ea8ff\" href=\"/\">Назад</a></p></body></html>";
 }
 
+// Копия String в фиксированный буфер: строка обрезается по размеру буфера.
+void copyField(char *dst, size_t size, const String &src) {
+  const size_t length = src.length() < size - 1 ? src.length() : size - 1;
+
+  memcpy(dst, src.c_str(), length);
+  dst[length] = '\0';
+}
+
 // SSID и адрес ядра приходят из формы и из кадра сопряжения, то есть не
 // доверены: кавычка в SSID ломала бы страницу и JSON, а разметка — исполнялась.
 String htmlEscape(const String &value) {
@@ -134,7 +142,7 @@ void SetupPortal::begin(bool manual) {
     WiFi.softAP(PORTAL_AP_SSID, portalPassword.c_str());
 
     active_ = true;
-    pairingStatus_ = "";
+    pairingStatus_[0] = '\0';
     infoUntil_ = millis() + PORTAL_INFO_MS;
 
     Serial.printf("SETUP: сеть '%s' (пароль %s), страница http://%s/\n",
@@ -166,9 +174,52 @@ void SetupPortal::loop() {
   // Обновление прошивки перезагружает модуль само, но только из этого вызова.
   ElegantOTA.loop();
 
+  service();
+
   if (restartAt_ != 0 && static_cast<int32_t>(millis() - restartAt_) >= 0) {
     Serial.println("SETUP: перезагрузка по настройкам портала");
     ESP.restart();
+  }
+}
+
+// Заявки маршрутов применяются здесь, в задаче loop(): Settings и NVS
+// принадлежат ей, а маршруты выполняются в задаче AsyncWebServer.
+void SetupPortal::service() {
+  if (saveRequested_) {
+    saveRequested_ = false;
+
+    Settings &settings = Settings::instance();
+
+    // Пустое поле пароля — «не менять»: пароль ядра в страницу не выводится.
+    const String password = (savePassword_[0] != '\0') ? String(savePassword_) : settings.password();
+
+    // Пароль ядра в памяти заявки не держим дольше одного применения.
+    memset(savePassword_, 0, sizeof(savePassword_));
+
+    if (password.length() < 8) {
+      setPairingStatus("Пароль точки доступа ядра не задан: введите его в поле пароля.");
+    } else {
+      const String host = (saveHost_[0] != '\0') ? String(saveHost_) : String(CORE_DEFAULT_HOST);
+
+      settings.saveCore(String(saveSsid_), password, host, savePort_);
+
+      restartAt_ = millis() + 1500;
+    }
+  }
+
+  if (pairCodeRequested_) {
+    pairCodeRequested_ = false;
+
+    Settings::instance().savePairCode(String(pendingPairCode_));
+    memset(pendingPairCode_, 0, sizeof(pendingPairCode_));
+    setPairingStatus("Код сохранён. Теперь нажмите «Найти ядро сопряжением».");
+  }
+
+  if (resetRequested_) {
+    resetRequested_ = false;
+
+    Settings::instance().clearCore();
+    restartAt_ = millis() + 1500;
   }
 }
 
@@ -208,7 +259,9 @@ bool SetupPortal::showInfo() {
 }
 
 void SetupPortal::setPairingStatus(const String &text) {
-  pairingStatus_ = text;
+  // Фиксированный буфер вместо String: статус читает задача портала, а пишут
+  // loop() и маршруты.
+  copyField(pairingStatus_, sizeof(pairingStatus_), text);
 }
 
 bool SetupPortal::allowRequest(AsyncWebServerRequest *request) const {
@@ -253,7 +306,11 @@ void SetupPortal::registerRoutes() {
       return;
     }
 
-    Settings &settings = Settings::instance();
+    if (password.length() > 0 && password.length() < 8) {
+      request->send(400, "text/html; charset=utf-8",
+                    htmlMessage("Пароль точки доступа ядра короче 8 символов."));
+      return;
+    }
 
     uint16_t port = CORE_DEFAULT_PORT;
 
@@ -265,22 +322,14 @@ void SetupPortal::registerRoutes() {
       }
     }
 
-    // Пустое поле пароля — «не менять»: пароль ядра в страницу не выводится.
-    const String storedPassword = password.length() > 0 ? password : settings.password();
-
-    if (storedPassword.length() < 8) {
-      request->send(400, "text/html; charset=utf-8",
-                    htmlMessage("Нужен пароль точки доступа ядра (не короче 8 символов)."));
-      return;
-    }
-
-    settings.saveCore(ssid,
-                      storedPassword,
-                      host.length() > 0 ? host : String(CORE_DEFAULT_HOST),
-                      port);
+    // Settings и NVS пишет только loop(): сюда кладём заявку без String.
+    copyField(saveSsid_, sizeof(saveSsid_), ssid);
+    copyField(savePassword_, sizeof(savePassword_), password);
+    copyField(saveHost_, sizeof(saveHost_), host);
+    savePort_ = port;
+    saveRequested_ = true;
 
     request->send(200, "text/html; charset=utf-8", htmlMessage("Сохранено. Перезагрузка…"));
-    restartAt_ = millis() + 1500;
   });
 
   server_.on("/paircode", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -296,8 +345,8 @@ void SetupPortal::registerRoutes() {
       return;
     }
 
-    Settings::instance().savePairCode(code);
-    pairingStatus_ = "Код сохранён. Теперь нажмите «Найти ядро сопряжением».";
+    copyField(pendingPairCode_, sizeof(pendingPairCode_), code);
+    pairCodeRequested_ = true;
 
     request->redirect("/");
   });
@@ -307,7 +356,7 @@ void SetupPortal::registerRoutes() {
       return;
     }
 
-    pairingStatus_ = "Ищу сеть сопряжения ядра…";
+    setPairingStatus("Ищу сеть сопряжения ядра…");
     pairingRequested_ = true;
     request->redirect("/");
   });
@@ -327,9 +376,8 @@ void SetupPortal::registerRoutes() {
       return;
     }
 
-    Settings::instance().clearCore();
+    resetRequested_ = true;
     request->send(200, "text/html; charset=utf-8", htmlMessage("Настройки сброшены. Перезагрузка…"));
-    restartAt_ = millis() + 1500;
   });
 
   server_.on("/close", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -349,6 +397,9 @@ void SetupPortal::registerRoutes() {
 }
 
 String SetupPortal::buildPage() const {
+  // Страница собирается в задаче AsyncWebServer, а строки настроек пишет
+  // loop(): без захвата можно прочитать String в момент её замены.
+  Settings::Lock guard;
   Settings &settings = Settings::instance();
 
   const bool provisioned = settings.provisioned();
@@ -450,9 +501,9 @@ String SetupPortal::buildPage() const {
   page += "<form method=\"post\" action=\"/reset\" onsubmit=\"return confirm('Сбросить настройки ядра?')\">";
   page += "<button class=\"ghost\" type=\"submit\">Сбросить настройки</button></form>";
 
-  if (pairingStatus_.length() > 0) {
+  if (pairingStatus_[0] != '\0') {
     page += "<p class=\"note\">";
-    page += htmlEscape(pairingStatus_);
+    page += htmlEscape(String(pairingStatus_));
     page += "</p>";
   }
 
@@ -473,6 +524,7 @@ String SetupPortal::buildPage() const {
 }
 
 String SetupPortal::buildStatusJson() const {
+  Settings::Lock guard;
   const Settings &settings = Settings::instance();
 
   String json = "{\"event\":\"status\",\"data\":{";

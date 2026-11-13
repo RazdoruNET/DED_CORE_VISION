@@ -44,15 +44,11 @@ extern int max_cart_rpm;
 extern int init_angle;      // угол на первом обороте карты
 extern int power;           // throttle, %
 extern int power_draw;      // сглаженное значение для полосы мощности
-extern int micro;           // micros() ядра
 extern float angles[22];
 extern float rpms[22];
 extern uint32_t cart_color;
 
 // --- Приборка ---------------------------------------------------------------
-extern int cart_old;
-extern int rpm_old;
-extern int max_rpm_old;
 extern bool cart_1_click;
 extern bool cart_2_click;
 extern bool cart_3_click;
@@ -135,7 +131,6 @@ extern int game_lane;
 extern int game_best;
 // 0 — приглашение, 1 — заезд, 2 — авария.
 extern uint8_t game_state;
-extern float game_offset;
 extern float game_spawn;
 extern float game_time;
 

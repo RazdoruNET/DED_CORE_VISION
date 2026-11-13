@@ -25,14 +25,10 @@ int max_cart_rpm = 12000;
 int init_angle = 0;
 int power = 0;
 int power_draw = 100;
-int micro = 0;
 float angles[22] = {0};
 float rpms[22] = {0};
 uint32_t cart_color = 0x2480;
 
-int cart_old = 0;
-int rpm_old = 0;
-int max_rpm_old = 0;
 bool cart_1_click = false;
 bool cart_2_click = false;
 bool cart_3_click = false;
@@ -79,7 +75,7 @@ int odometr = 0;
 
 String optins_name[5] = {
     "< БЛОКИРОВКА ЭКРАНА",
-    "< РАДИУС КОЛЕСА",
+    "< ДИАМЕТР КОЛЕСА",
     "< ЯРКОСТЬ ПОДСВЕТКИ",
     "< ИГРА",
     "",
@@ -125,7 +121,6 @@ String alert_value = "";
 int game_lane = 1;
 int game_best = 0;
 uint8_t game_state = 0;
-float game_offset = 0;
 float game_spawn = 0.8f;
 float game_time = 0;
 

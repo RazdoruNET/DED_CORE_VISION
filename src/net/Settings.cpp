@@ -27,7 +27,27 @@ Settings &Settings::instance() {
   return settings;
 }
 
+// Рекурсивный: saveCore и clearCore вызывают setFailedBoots под своим же
+// захватом.
+Settings::Lock::Lock() {
+  SemaphoreHandle_t mutex = Settings::instance().mutex_;
+
+  if (mutex != nullptr && xSemaphoreTakeRecursive(mutex, portMAX_DELAY) == pdTRUE) {
+    taken_ = true;
+  }
+}
+
+Settings::Lock::~Lock() {
+  if (taken_) {
+    xSemaphoreGiveRecursive(Settings::instance().mutex_);
+  }
+}
+
 bool Settings::begin() {
+  if (mutex_ == nullptr) {
+    mutex_ = xSemaphoreCreateRecursiveMutex();
+  }
+
   const bool nvsReady = prefs_.begin(kNamespace, false);
 
   if (nvsReady) {
@@ -70,6 +90,8 @@ bool Settings::provisioned() const {
 }
 
 void Settings::saveCore(const String &ssid, const String &password, const String &host, uint16_t port) {
+  Lock guard;
+
   ssid_ = ssid;
   password_ = password;
   host_ = host;
@@ -86,21 +108,29 @@ void Settings::saveCore(const String &ssid, const String &password, const String
 }
 
 void Settings::saveToken(const String &token) {
+  Lock guard;
+
   token_ = token;
   prefs_.putString(kKeyToken, token_);
 }
 
 void Settings::saveBssid(const String &bssid) {
+  Lock guard;
+
   bssid_ = bssid;
   prefs_.putString(kKeyBssid, bssid_);
 }
 
 void Settings::savePairCode(const String &code) {
+  Lock guard;
+
   pairCode_ = code;
   prefs_.putString(kKeyPairCode, pairCode_);
 }
 
 void Settings::clearCore() {
+  Lock guard;
+
   ssid_ = "";
   password_ = "";
   host_ = CORE_DEFAULT_HOST;
@@ -126,6 +156,8 @@ void Settings::clearCore() {
 }
 
 void Settings::setFailedBoots(uint8_t value) {
+  Lock guard;
+
   if (value == failedBoots_) {
     return;
   }

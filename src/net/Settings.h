@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 // Настройки модуля в NVS: к какому ядру подключаться и пароль обновления.
 //
@@ -11,6 +13,21 @@
 // (см. net/PairingLink.h).
 class Settings {
 public:
+  // Строки настроек пишет loop(), а читает ещё и задача портала. Геттеры
+  // отдают ссылки, поэтому мьютекс держит вызывающий: страница портала берёт
+  // его на всё время сборки, методы записи — на время записи.
+  class Lock {
+  public:
+    Lock();
+    ~Lock();
+
+    Lock(const Lock &) = delete;
+    Lock &operator=(const Lock &) = delete;
+
+  private:
+    bool taken_ = false;
+  };
+
   static Settings &instance();
 
   bool begin();
@@ -55,6 +72,7 @@ private:
   static String makePassword();
 
   Preferences prefs_;
+  SemaphoreHandle_t mutex_ = nullptr;
 
   String ssid_;
   String password_;

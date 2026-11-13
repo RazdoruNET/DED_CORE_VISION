@@ -13,6 +13,11 @@ namespace {
 
 constexpr int kMaxItems = 24;
 
+// z предмета на линии машины. Проверяем весь путь за кадр, а не только
+// конечную точку: на большой скорости предмет проскакивал эту линию.
+constexpr float kCarZNear = 5.85f;
+constexpr float kCarZFar = 6.85f;
+
 GameItem items[kMaxItems];
 int itemCount = 0;
 
@@ -131,10 +136,6 @@ void spawnWave() {
     addItem(static_cast<uint8_t>(esp_random() % 3),
             (esp_random() % 100) < 35 ? ITEM_NITRO : ITEM_COIN);
   }
-}
-
-bool isBonus(uint8_t type) {
-  return type == ITEM_NITRO || type == ITEM_COIN;
 }
 
 void drawItem(const GameItem &item) {
@@ -358,13 +359,13 @@ void update(float dt) {
   for (int i = 0; i < itemCount; ++i) {
     GameItem &item = items[i];
 
+    const float previousZ = item.z;
+
     item.z += dt * game_speed * 30.0f;
 
-    if (item.hit || item.z < 5.85f || item.z > 6.85f) {
-      continue;
-    }
+    const bool crossedCar = (item.z >= kCarZNear && previousZ <= kCarZFar);
 
-    if (item.lane != game_lane) {
+    if (item.hit || !crossedCar || item.lane != game_lane) {
       continue;
     }
 

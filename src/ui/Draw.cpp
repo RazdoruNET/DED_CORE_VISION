@@ -226,80 +226,78 @@ void drawSpeedometr()
 }
 
 void drawCart()
-{ 
-  if (sizeof(rpms[0])>0)
+{
+  // 7 / 12 / 22 точки по типу карты; массивы рассчитаны на 22.
+  const int dot_count = (cart_type == 0) ? 7 : (cart_type == 1) ? 12 : 22;
+
+  // Масштаб оси — максимум по точкам карты: порядок точек в кадре не
+  // гарантирован, последняя не обязана быть самой «верхней».
+  float dc_max_rpm = 0;
+
+  for (int i = 0; i < dot_count; i++)
   {
-    int dot_count = (cart_type == 0) ? 7 : (cart_type == 1) ? 12 : 22;
-    
-    float dc_max_rpm = rpms[dot_count - 1];
+    if (rpms[i] > dc_max_rpm)
+    {
+      dc_max_rpm = rpms[i];
+    }
+  }
 
-    float dc_max_angle = init_angle;  // или какое-то значение по умолчанию
+  // Верхняя граница графика — угол первой точки или больший из углов карты.
+  float dc_max_angle = init_angle;
 
-    if (dot_count > 0) {
-      for (int i = 1; i < dot_count; i++) {
-        if (angles[i] > dc_max_angle) {
-          dc_max_angle = angles[i];
-        }
-      }
+  for (int i = 0; i < dot_count; i++)
+  {
+    if (angles[i] > dc_max_angle)
+    {
+      dc_max_angle = angles[i];
+    }
+  }
+
+  if (dc_max_rpm > 0 && dc_max_angle > 0)
+  {
+    const float x_min = 245;
+    const float x_max = 440;
+    const float y_min = 90;
+    float y_max = 170;
+
+    if (toggle_right == false)
+    {
+      y_max = 220;
     }
 
-    if (dc_max_rpm > 0 && dc_max_angle > 0)
+    gfx->drawLine(x_min, y_max, x_max, y_max, 0x31A6);
+    gfx->drawLine(x_min, y_min, x_min, y_max, 0x31A6);
+
+    const float w = x_max - x_min;
+    const float h = y_max - y_min;
+
+    const float ignition_step = dc_max_angle / h;
+    const float rpm_step = dc_max_rpm / w;
+
+    if (ignition_step > 0 && rpm_step > 0)
     {
-      float x_min = 245;
-      float x_max = 440;
-      float y_min = 90;
-      float y_max = 170;
-
-      if (toggle_right == false)
+      for (int i = 0; i < dot_count - 1; i++)
       {
-        y_max = 220;
+        const float dot_x_1 = x_min + (rpms[i] / rpm_step);
+        const float dot_y_1 = y_max - (angles[i] / ignition_step);
+
+        const float dot_x_2 = x_min + (rpms[i + 1] / rpm_step);
+        const float dot_y_2 = y_max - (angles[i + 1] / ignition_step);
+
+        gfx->drawLine(dot_x_1, dot_y_1, dot_x_2, dot_y_2, cart_color);
+
+        gfx->fillCircle(dot_x_1, dot_y_1, 2, COLOR_BLACK);
+
+        if (i + 1 == dot_count - 1)
+        {
+          gfx->fillCircle(dot_x_2, dot_y_2, 2, COLOR_BLACK);
+        }
       }
-      
-      gfx->drawLine(x_min,y_max,x_max,y_max, 0x31A6);
-      gfx->drawLine(x_min,y_min,x_min,y_max, 0x31A6);
 
-      float w = x_max - x_min;
-      float h = y_max - y_min; // 90
-
-      float count_step = dot_count;
-
-      float ignition_step = dc_max_angle / h; // 0,37777778
-      float rpm_step = dc_max_rpm / w;
-
-      if (ignition_step > 0 && rpm_step > 0)
+      if (rpm > 0)
       {
-        float dots_x[] = {};
-        float dots_y[] = {};
-
-        for (int i = 0; i < count_step - 1; i++)
-        {
-          float rpm_dot_1 = rpms[i];
-          float angle_dot_1 = angles[i];
-
-          float dot_x_1 = x_min + (rpm_dot_1/rpm_step);
-          float dot_y_1 = y_max - (angle_dot_1/ignition_step);
-        
-          float rpm_dot_2 = rpms[i + 1];
-          float angle_dot_2 = angles[i + 1];
-
-          float dot_x_2 = x_min + (rpm_dot_2/rpm_step);
-          float dot_y_2 = y_max - (angle_dot_2/ignition_step);
-
-          gfx->drawLine(dot_x_1,dot_y_1,dot_x_2,dot_y_2, cart_color);
-
-          gfx->fillCircle(dot_x_1,dot_y_1,2, COLOR_BLACK);
-          
-          if (i + 1 == count_step - 1)
-          {
-            gfx->fillCircle(dot_x_2,dot_y_2,2, COLOR_BLACK);
-          }
-        }
-
-        if (rpm > 0)
-        {
-          float x_rpm = x_min + (rpm/rpm_step);
-          gfx->drawLine(x_rpm,y_min,x_rpm,y_max, RED);
-        }
+        const float x_rpm = x_min + (rpm / rpm_step);
+        gfx->drawLine(x_rpm, y_min, x_rpm, y_max, RED);
       }
     }
   }
@@ -602,12 +600,6 @@ void drawTransmition()
 
 void drawINFO()
 {
- 
-  size_t freeSRAM = ESP.getFreeHeap();
-
-  // Получение доступного heap
-  size_t fq = ESP.getFlashChipSpeed();
-
   gfx->setTextSize(1);
   
   gfx->setTextColor(COLOR_BLACK);
@@ -905,7 +897,6 @@ void game()
   gfx->println(game_score_1);
 
   int mot_x = 240;
-  int mot_y = 160;
   int s_cy = 0;
 
   // В игре положение машины задаёт выбранная полоса, а не карта ядра:

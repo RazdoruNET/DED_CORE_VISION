@@ -198,7 +198,6 @@ void applyTelemetry() {
   cart_type = t.type;
   init_angle = t.initAngle;
   power = t.throttle;
-  micro = t.micros;
 
   if (t.card >= 0 && t.card <= 2) {
     cart = t.card;

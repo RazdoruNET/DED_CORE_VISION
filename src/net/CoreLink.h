@@ -50,7 +50,6 @@ public:
 
   bool started() const { return started_; }
   bool connected();
-  bool authorized() const { return authorized_; }
   const CoreTelemetry &telemetry() const { return telemetry_; }
 
   // Новые параметры сети, присланные ядром. true — ровно один раз на кадр.
