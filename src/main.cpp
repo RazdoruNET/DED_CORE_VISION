@@ -57,15 +57,24 @@ void runPairing(bool explicitRequest) {
   Settings &settings = Settings::instance();
 
   const String expectedBssid = explicitRequest ? String() : settings.bssid();
+  const String pairCode = settings.pairCode();
 
   itin_step = 0;
   drawInitialScreen();
 
+  if (pairCode.length() < 8) {
+    SetupPortal::instance().setPairingStatus(
+        "Нужен код сопряжения: откройте «Модули» в приложении блока, нажмите "
+        "«Найти модуль» и введите показанный код в портале модуля.");
+    return;
+  }
+
   SetupPortal::instance().setPairingStatus("Ищу сеть сопряжения ядра (DED_PAIR_*)…");
 
-  if (!PairingLink::instance().pair(credentials, expectedBssid)) {
+  if (!PairingLink::instance().pair(credentials, pairCode, expectedBssid)) {
     SetupPortal::instance().setPairingStatus(
-        "Сеть сопряжения не найдена. Откройте в приложении «Модули» → «Найти модуль» и повторите.");
+        "Сеть сопряжения не найдена или код не подошёл. Откройте в приложении "
+        "«Модули» → «Найти модуль» и повторите.");
     return;
   }
 
