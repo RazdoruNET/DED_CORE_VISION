@@ -7,9 +7,10 @@
 // Портал настройки модуля.
 //
 // Поднимается, когда модуль ещё не знает ядро или потерял его: точка доступа
-// DED_CORE_VISION, страница с состоянием, ручной ввод параметров ядра, запуск
-// сопряжения, проверка дисплея и обновление прошивки. В рабочем режиме
-// портала нет.
+// DED_CORE_VISION с паролем из NVS, страница с состоянием, ручной ввод
+// параметров ядра, запуск сопряжения, проверка дисплея и обновление прошивки.
+// Пароль точки доступа и адрес показываются на дисплее при открытии портала.
+// В рабочем режиме портала нет.
 class SetupPortal {
 public:
   static SetupPortal &instance();
@@ -25,6 +26,14 @@ public:
 
   void requestPairing();
   bool takePairingRequest();
+
+  // Проверка дисплея: маршрут только выставляет заявку, рисует loop().
+  bool takeDisplayTestRequest();
+
+  // true — первые секунды после открытия портала: экран показывает имя сети,
+  // пароль точки доступа и адрес страницы.
+  bool showInfo();
+
   void setPairingStatus(const String &text);
 
 private:
@@ -47,6 +56,9 @@ private:
 
   bool pairingRequested_ = false;
   String pairingStatus_;
+
+  bool displayTestRequested_ = false;
+  unsigned long infoUntil_ = 0;
 
   unsigned long restartAt_ = 0;
 };

@@ -11,6 +11,9 @@ void drawDashboard();
 void drawOptions();
 void drawWarning(String text);
 
+// Экран с параметрами точки доступа портала настройки.
+void drawPortalInfo(const String &ssid, const String &pass, const String &ip);
+
 // Игра. gameAlert показывает всплывающий текст поверх дороги.
 void gameAlert(String txt, int x);
 void game();

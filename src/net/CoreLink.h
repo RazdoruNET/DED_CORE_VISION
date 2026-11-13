@@ -69,7 +69,7 @@ private:
   void handleEvent(WStype_t type, uint8_t *payload, size_t length);
   void handleFrame(const char *payload, size_t length);
   void sendHello();
-  void sendText(String &frame);
+  void sendText(String &frame, bool logPayload = true);
 
   WebSocketsClient socket_;
   CoreTelemetry telemetry_;

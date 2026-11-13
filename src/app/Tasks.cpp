@@ -7,6 +7,16 @@
 
 namespace {
 
+// Моточасы копятся в миллисекундах и не влезают в int (2^31 мс ≈ 596 ч):
+// в RAM счётчик беззнаковый, а в NVS пишем с насыщением, чтобы старое
+// значение не превратилось в отрицательное.
+void saveEngineHours() {
+  const int32_t stored =
+      (mh > static_cast<uint32_t>(INT32_MAX)) ? INT32_MAX : static_cast<int32_t>(mh);
+
+  preferences.putInt("mh_h", stored);
+}
+
 // Сглаживание оборотов и моточасы — перенос ServerHandler заводской прошивки.
 void rpmHandler() {
   int rpm_step = 100;
@@ -48,7 +58,7 @@ void rpmHandler() {
       start_engin = 0;
 
       if (lastSaveMs == 0 || static_cast<uint32_t>(millis() - lastSaveMs) >= 300000) {
-        preferences.putInt("mh_h", mh);
+        saveEngineHours();
         lastSaveMs = millis();
         mhDirty = false;
       }
@@ -58,7 +68,7 @@ void rpmHandler() {
   } else {
     // Двигатель заглох — сохраняем накопленное сразу.
     if (wasRunning && mhDirty) {
-      preferences.putInt("mh_h", mh);
+      saveEngineHours();
       mhDirty = false;
     }
 
@@ -112,20 +122,15 @@ void TaskDrawPropCode(void *parameter) {
   (void)parameter;
 
   for (;;) {
-    if (speed > speed_draw && speed_draw < 200) {
-      if (speed - speed_draw < 5) {
-        speed_draw += 5;
-      } else if (speed - speed_draw < 10) {
-        speed_draw += 10;
-      } else if (speed - speed_draw < 20) {
-        speed_draw += 20;
-      } else {
-        speed_draw++;
-      }
-    }
+    const int gap = speed - speed_draw;
 
-    if (speed < speed_draw && speed_draw > 0) {
-      speed_draw -= 10;
+    if (gap != 0) {
+      // Не больше 10 км/ч за тик: рывки датчика не дёргают цифру, но цель
+      // всегда достигается. Раньше шаг был перевёрнут (у цели +5/+10/+20,
+      // издалека +1) и цифра застревала на ~9 км/ч ниже фактической скорости.
+      const int step = (gap > 10) ? 10 : (gap < -10) ? -10 : gap;
+
+      speed_draw += step;
 
       if (speed_draw < 0) {
         speed_draw = 0;

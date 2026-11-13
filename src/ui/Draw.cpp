@@ -107,86 +107,61 @@ void drawTahometr()
 {
   // max_rpm приходит из настроек ядра; нулевое значение не должно ронять
   // делением на ноль.
-  float one_persent = (max_rpm > 0) ? (max_rpm / 10.0f) : 1.0f;
-  int rpm_persent = (one_persent > 0.0f) ? static_cast<int>(rpm / one_persent) : 0;
+  const float one_persent = (max_rpm > 0) ? (max_rpm / 10.0f) : 1.0f;
 
   for (int i = 1; i <= 10; i++)
   {
+    const int cell_max_rpm = static_cast<int>(one_persent * i);
+
     uint32_t color = 0x08A0;
-    
-    int cell_max_rpm = one_persent * i;
-    
+
     if (i > 7)
-    { 
-      if (rpm < cell_max_rpm)
-      {
-        color = 0x1000; // DARK RED
-      }
-      else
-      {
-        color = RED; // RED
-      }
+    {
+      color = (rpm < cell_max_rpm) ? 0x1000 /* DARK RED */ : RED;
     }
     else if (i > 3)
-    { 
-      if (rpm < cell_max_rpm)
-      {
-        color = 0x20E1; // DARK YELLOW
-      }
-      else
-      {
-        color = 0xCC80; // YELLOW 
-      }
-    }
-    else 
-    { 
-      if (rpm < cell_max_rpm)
-      {
-        color = 0x08A0; // DARK GREEN
-      }
-      else
-      {
-        color = GREEN; // GREEN 
-      }
-    }
-    
-    gfx->fillRect(454,247-((i-1)*27),25,25, color);
-
-    //////
-
-    gfx->setFont(u8g2_font_crox2hb_tf);
-    gfx->setTextSize(1);
-    
-    String max_rpm_str = "MAX " + String((max_rpm > max_cart_rpm) ? max_cart_rpm : max_rpm);
-
-    if (coreStale == true)
     {
-      max_rpm_str = "ERROR TO";
-    }
-
-    gfx->setCursor(251, 257);
-   
-    gfx->setTextColor(RED);
-    gfx->println(max_rpm_str);
-    
-    String rpm_str = String(rpm);
-    
-    if (coreStale == true)
-    {
-      rpm_str = "DED BOX";
+      color = (rpm < cell_max_rpm) ? 0x20E1 /* DARK YELLOW */ : 0xCC80 /* YELLOW */;
     }
     else
     {
-      gfx->setFont(u8g2_font_crox4hb_tf);
-      gfx->setTextSize(1);
+      color = (rpm < cell_max_rpm) ? 0x08A0 /* DARK GREEN */ : GREEN;
     }
 
-    int x = 440 - (rpm_str.length() * 11);
-    
-    gfx->setCursor(x, 260);
-    gfx->setTextColor(COLOR_BLACK);
-    gfx->println(rpm_str);
+    gfx->fillRect(454,247-((i-1)*27),25,25, color);
   }
+
+  // Текст рисуется один раз на кадр: он не зависит от ячейки тахометра.
+  gfx->setFont(u8g2_font_crox2hb_tf);
+  gfx->setTextSize(1);
+
+  String max_rpm_str = "MAX " + String((max_rpm > max_cart_rpm) ? max_cart_rpm : max_rpm);
+
+  if (coreStale == true)
+  {
+    max_rpm_str = "ERROR TO";
+  }
+
+  gfx->setCursor(251, 257);
+
+  gfx->setTextColor(RED);
+  gfx->println(max_rpm_str);
+
+  String rpm_str = String(rpm);
+
+  if (coreStale == true)
+  {
+    rpm_str = "DED BOX";
+  }
+  else
+  {
+    gfx->setFont(u8g2_font_crox4hb_tf);
+    gfx->setTextSize(1);
+  }
+
+  gfx->setCursor(440 - static_cast<int>(rpm_str.length() * 11), 260);
+  gfx->setTextColor(COLOR_BLACK);
+  gfx->println(rpm_str);
 }
 
 void drawSpeedometr()
@@ -247,9 +222,7 @@ void drawSpeedometr()
   gfx->setTextSize(1);
   gfx->setTextColor(COLOR_BLACK);
   
-  int draw_mh = (mh / 3600000 < 0) ? 0 : mh / 3600000;
-
-  gfx->println("MH: " + String(draw_mh));
+  gfx->println("MH: " + String(mh / 3600000));
 }
 
 void drawCart()
@@ -672,26 +645,28 @@ void drawPower()
   {
     if (coreOnline)
     {
-      if (power_draw - power < 5)
+      // Сглаживание симметричное: без abs() полоса прыгала вверх мгновенно,
+      // а вниз уползала по 5 за кадр.
+      const int target = constrain(power, 0, 100);
+      const int gap = target - power_draw;
+
+      if (gap > 5)
       {
-        power_draw = power;
+        power_draw += 5;
+      }
+      else if (gap < -5)
+      {
+        power_draw -= 5;
       }
       else
       {
-        if (power_draw > power)
-        {
-          power_draw -= 5;
-        }
-        else
-        {
-          power_draw += 5;
-        }
+        power_draw = target;
       }
     }
 
     gfx->fillRect(245,180,195,40, COLOR_BLACK);
 
-    int x = power_draw * 1.95;
+    const int x = power_draw * 1.95;
 
     int color_bg = GREEN;
     
@@ -989,9 +964,8 @@ void game()
   for (int i = 1; i < 12; i++) {
       // z — это расстояние от центра. Чем больше z, тем ближе линия к нам.
       float z = i + offset;
-      
+
       // Экспоненциальный рост размера, чтобы создать эффект скорости
-      int size_w = (int)(pow(z, 2.5) * 2);
       int size_h = (int)(pow(z, 2.5) * 1.2);
 
       // Верхняя грань
@@ -1044,10 +1018,12 @@ void game()
 
   gfx->fillTriangle(240, 275, 540 + s_cy, 275, 270, 135, 0x3942);
 
-  for (int i = 1; i < 12; i += 0.5) {
-      float z = i + offset;      
-      int size_w = (int)(pow(z, 2.5) * 2) + 25;
-      int size_h = (int)(pow(z * 0.5, 2.5) * 1.2);
+  // Шаг полклетки: с целочисленным счётчиком `i += 0.5` не менял i, и цикл
+  // не заканчивался — игра вешала loop() на первом же кадре.
+  for (float i = 1.0f; i < 12.0f; i += 0.5f) {
+      const float z = i + offset;
+      const int size_w = static_cast<int>(pow(z, 2.5) * 2) + 25;
+      const int size_h = static_cast<int>(pow(z * 0.5, 2.5) * 1.2);
       gfx->drawLine(cx - size_w, cy + size_h, cx + size_w, cy + size_h, 0x59E3);
   }
 
@@ -1126,4 +1102,32 @@ void drawWarning(String text)
   gfx->flush();
 
   delay(1000);
+}
+
+// Экран на время открытия портала: точка доступа закрыта паролем, и этот
+// пароль нужно прочитать с дисплея, иначе в портал не попасть.
+void drawPortalInfo(const String &ssid, const String &pass, const String &ip)
+{
+  gfx->fillScreen(COLOR_WHITE);
+
+  gfx->setFont(u8g2_font_crox2hb_tf);
+  gfx->setTextSize(1);
+  gfx->setTextColor(COLOR_BLACK);
+
+  gfx->setCursor(140, 60);
+  gfx->println(F("ПОРТАЛ НАСТРОЙКИ ОТКРЫТ"));
+
+  gfx->setCursor(60, 100);
+  gfx->println("СЕТЬ:   " + ssid);
+
+  gfx->setCursor(60, 130);
+  gfx->println("ПАРОЛЬ: " + pass);
+
+  gfx->setCursor(60, 160);
+  gfx->println("АДРЕС:  http://" + ip + "/");
+
+  gfx->setCursor(60, 205);
+  gfx->println(F("ЭКРАН ПРИБОРКИ ВЕРНЁТСЯ САМ"));
+
+  gfx->flush();
 }

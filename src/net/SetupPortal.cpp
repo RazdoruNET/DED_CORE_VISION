@@ -3,8 +3,6 @@
 #include <ElegantOTA.h>
 #include <WiFi.h>
 
-#include "app/State.h"
-#include "display/Display.h"
 #include "app/Status.h"
 #include "config/CONFIG.h"
 #include "config/PROPS.h"
@@ -129,13 +127,20 @@ void SetupPortal::begin(bool manual) {
     // делают маршрут до ядра зависимым от порядка интерфейсов в lwIP.
     static const IPAddress portalIp(192, 168, 5, 1);
     WiFi.softAPConfig(portalIp, portalIp, IPAddress(255, 255, 255, 0));
-    WiFi.softAP(PORTAL_AP_SSID);
+
+    // Точка доступа закрыта паролем: маршруты настройки не авторизуют запрос,
+    // и открытая сеть позволяла бы перенастроить модуль на чужое ядро.
+    const String &portalPassword = Settings::instance().portalPassword();
+    WiFi.softAP(PORTAL_AP_SSID, portalPassword.c_str());
 
     active_ = true;
     pairingStatus_ = "";
+    infoUntil_ = millis() + PORTAL_INFO_MS;
 
-    Serial.printf("SETUP: сеть '%s', страница http://%s/\n",
-                  PORTAL_AP_SSID, WiFi.softAPIP().toString().c_str());
+    Serial.printf("SETUP: сеть '%s' (пароль %s), страница http://%s/\n",
+                  PORTAL_AP_SSID,
+                  portalPassword.c_str(),
+                  WiFi.softAPIP().toString().c_str());
   }
 
   if (!started_) {
@@ -178,6 +183,28 @@ bool SetupPortal::takePairingRequest() {
 
   pairingRequested_ = false;
   return true;
+}
+
+bool SetupPortal::takeDisplayTestRequest() {
+  if (!displayTestRequested_) {
+    return false;
+  }
+
+  displayTestRequested_ = false;
+  return true;
+}
+
+bool SetupPortal::showInfo() {
+  if (infoUntil_ == 0) {
+    return false;
+  }
+
+  if (static_cast<int32_t>(millis() - infoUntil_) < 0) {
+    return true;
+  }
+
+  infoUntil_ = 0;
+  return false;
 }
 
 void SetupPortal::setPairingStatus(const String &text) {
@@ -238,8 +265,7 @@ void SetupPortal::registerRoutes() {
       }
     }
 
-    // Пустое поле пароля — «не менять»: страница портала открытая и пароль
-    // ядра в неё не выводится.
+    // Пустое поле пароля — «не менять»: пароль ядра в страницу не выводится.
     const String storedPassword = password.length() > 0 ? password : settings.password();
 
     if (storedPassword.length() < 8) {
@@ -291,8 +317,8 @@ void SetupPortal::registerRoutes() {
       return;
     }
 
-    display::testPattern();
-    displayTestUntil = millis() + 2500;
+    // Рисует loop(): Canvas нельзя писать из двух задач сразу.
+    displayTestRequested_ = true;
     request->redirect("/");
   });
 
@@ -315,7 +341,8 @@ void SetupPortal::registerRoutes() {
     stop();
   });
 
-  // Обновление прошивки закрыто паролем из NVS: точка доступа портала открытая.
+  // Обновление прошивки закрыто своим паролем из NVS: доступ к точке доступа
+  // портала и право перепрошить модуль — разные вещи.
   // Маршрут /update регистрирует ElegantOTA, поэтому он отвечает и после
   // закрытия портала — из сети ядра, но только с паролем.
   ElegantOTA.begin(&server_, "admin", Settings::instance().otaPassword().c_str());

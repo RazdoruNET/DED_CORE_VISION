@@ -24,6 +24,10 @@ enum GameItemType : uint8_t {
 
 namespace gameui {
 
+// Забирает заявки тач-задачи и применяет их к состоянию игры. Вызывается
+// из loop() каждый проход; также вызывается из update().
+void service();
+
 // Экран приглашения и старт заезда.
 void attract();
 void begin();

@@ -16,6 +16,7 @@ constexpr const char *kKeyHost = "host";
 constexpr const char *kKeyPort = "port";
 constexpr const char *kKeyFails = "fails";
 constexpr const char *kKeyOtaPass = "otapw";
+constexpr const char *kKeyPortalPass = "appw";
 constexpr const char *kKeyToken = "mtok";
 constexpr const char *kKeyBssid = "bssid";
 constexpr const char *kKeyPairCode = "paircode";
@@ -36,17 +37,29 @@ bool Settings::begin() {
   }
 
   // Пароль OTA не должен оставаться пустым даже при сбое NVS: ElegantOTA с
-  // пустым паролем отключает авторизацию, а точка доступа портала открытая.
+  // пустым паролем отключает авторизацию.
   if (otaPassword_.length() == 0) {
-    otaPassword_ = makeOtaPassword();
+    otaPassword_ = makePassword();
 
     if (nvsReady) {
       prefs_.putString(kKeyOtaPass, otaPassword_);
     }
 
-    // Пароль печатаем один раз: портал открытый, а обновление прошивки —
-    // единственное действие, которым можно испортить модуль.
+    // Пароль печатаем один раз: обновление прошивки — единственное действие,
+    // которым можно испортить модуль.
     Serial.printf("SETTINGS: пароль обновления прошивки: %s\n", otaPassword_.c_str());
+  }
+
+  // Точка доступа портала закрыта паролем: маршруты настройки запрос не
+  // авторизуют, и открытая сеть позволяла бы перенастроить модуль на чужое ядро.
+  if (portalPassword_.length() < 8) {
+    portalPassword_ = makePassword();
+
+    if (nvsReady) {
+      prefs_.putString(kKeyPortalPass, portalPassword_);
+    }
+
+    Serial.printf("SETTINGS: пароль точки доступа портала: %s\n", portalPassword_.c_str());
   }
 
   return nvsReady;
@@ -93,12 +106,19 @@ void Settings::clearCore() {
   host_ = CORE_DEFAULT_HOST;
   port_ = CORE_DEFAULT_PORT;
 
+  // Токен и код сопряжения принадлежали старому ядру и одноразовому окну
+  // сопряжения: после сброса они не нужны и только вводят в заблуждение.
+  token_ = "";
+  pairCode_ = "";
+  bssid_ = "";
+
   prefs_.remove(kKeySsid);
   prefs_.remove(kKeyPass);
   prefs_.remove(kKeyHost);
   prefs_.remove(kKeyPort);
   prefs_.remove(kKeyBssid);
-  bssid_ = "";
+  prefs_.remove(kKeyToken);
+  prefs_.remove(kKeyPairCode);
 
   setFailedBoots(0);
 
@@ -120,6 +140,7 @@ void Settings::load() {
   host_ = prefs_.getString(kKeyHost, CORE_DEFAULT_HOST);
   port_ = prefs_.getUShort(kKeyPort, CORE_DEFAULT_PORT);
   otaPassword_ = prefs_.getString(kKeyOtaPass, "");
+  portalPassword_ = prefs_.getString(kKeyPortalPass, "");
   token_ = prefs_.getString(kKeyToken, "");
   bssid_ = prefs_.getString(kKeyBssid, "");
   pairCode_ = prefs_.getString(kKeyPairCode, "");
@@ -134,7 +155,7 @@ void Settings::load() {
   }
 }
 
-String Settings::makeOtaPassword() {
+String Settings::makePassword() {
   // Без похожих символов: пароль набирают вручную с экрана или из лога.
   static const char alphabet[] = "abcdefghijkmnpqrstuvwxyz23456789";
 

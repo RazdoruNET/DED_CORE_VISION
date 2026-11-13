@@ -86,8 +86,8 @@ extern int speed_draw;
 extern int last_speed_sense;
 extern uint32_t speed_meter_time;
 extern uint32_t start_engin;
-extern int mh;
-extern int odometr;
+extern uint32_t mh;             // моточасы, мс наработки (не влезают в int)
+extern int odometr;             // одометр, м
 
 // --- Экран настроек ---------------------------------------------------------
 extern String optins_name[5];

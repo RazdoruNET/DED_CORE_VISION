@@ -44,11 +44,15 @@ public:
 
   const String &otaPassword() const { return otaPassword_; }
 
+  // Пароль точки доступа портала: маршруты настройки не авторизуют запрос,
+  // поэтому сеть закрыта паролем, который виден на дисплее модуля.
+  const String &portalPassword() const { return portalPassword_; }
+
 private:
   Settings() = default;
 
   void load();
-  static String makeOtaPassword();
+  static String makePassword();
 
   Preferences prefs_;
 
@@ -60,6 +64,7 @@ private:
   String bssid_;
   String pairCode_;
   String otaPassword_;
+  String portalPassword_;
 
   // Кэш счётчика: NVS пишется только при изменении значения, иначе «мигающий»
   // линк изнашивал бы flash на каждом переходе в online.

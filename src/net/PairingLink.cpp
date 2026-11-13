@@ -90,9 +90,21 @@ bool PairingLink::pair(CoreCredentials &out, const String &pairCode,
   String apBssid;
   bool connected = false;
 
-  const uint32_t perCandidateTimeout = timeoutMs < 8000 ? timeoutMs : 8000;
+  // Перебор кандидатов ограничен общим бюджетом: иначе 16 чужих DED_PAIR_*
+  // держали loop() без отрисовки и телеметрии больше двух минут.
+  const unsigned long scanStarted = millis();
 
   for (int candidate = 0; candidate < count && !connected; candidate++) {
+    const uint32_t elapsed = static_cast<uint32_t>(millis() - scanStarted);
+
+    if (elapsed >= timeoutMs) {
+      Serial.println("PAIR: бюджет поиска исчерпан");
+      break;
+    }
+
+    const uint32_t remaining = timeoutMs - elapsed;
+    const uint32_t perCandidateTimeout = remaining < 8000 ? remaining : 8000;
+
     Serial.printf("PAIR: пробуем '%s' (%s)\n", ssids[candidate].c_str(), bssids[candidate].c_str());
 
     WiFi.begin(ssids[candidate].c_str(), pairCode.c_str());

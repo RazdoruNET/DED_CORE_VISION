@@ -86,7 +86,8 @@ void CoreLink::sendHello() {
   frame += Settings::instance().token();
   frame += "\"}}";
 
-  sendText(frame);
+  // Кадр содержит токен: в лог его целиком не печатаем.
+  sendText(frame, false);
 }
 
 bool CoreLink::takeCredentials(String &ssid, String &password, String &host, uint16_t &port) {
@@ -104,10 +105,14 @@ bool CoreLink::takeCredentials(String &ssid, String &password, String &host, uin
   return true;
 }
 
-void CoreLink::sendText(String &frame) {
+void CoreLink::sendText(String &frame, bool logPayload) {
   socket_.sendTXT(frame);
 
-  Serial.printf("CORE > %s\n", frame.c_str());
+  if (logPayload) {
+    Serial.printf("CORE > %s\n", frame.c_str());
+  } else {
+    Serial.println("CORE > module_hello (токен скрыт)");
+  }
 }
 
 void CoreLink::onEvent(WStype_t type, uint8_t *payload, size_t length) {

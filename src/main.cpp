@@ -30,7 +30,11 @@ unsigned long g_lastFrameMs = 0;
 
 void loadUiSettings() {
   odometr = preferences.getInt("odometr", 0);
-  mh = preferences.getInt("mh_h", 0);
+
+  // Старые прошивки писали моточасы знаковым int: отрицательное значение
+  // после переполнения не восстанавливаем, начинаем с нуля.
+  const int32_t storedMh = preferences.getInt("mh_h", 0);
+  mh = (storedMh > 0) ? static_cast<uint32_t>(storedMh) : 0;
 
   toggle_right = preferences.getBool("toggle_right", false);
   toggle_left = preferences.getBool("toggle_left", false);
@@ -218,7 +222,18 @@ void applyTelemetry() {
 void drawScreen() {
   const unsigned long now = millis();
 
+  // Заявки тача применяет только loop(): состояние игры и Canvas живут здесь.
+  gameui::service();
+
   runtime.screen = screen_index;
+
+  // Тестовую заливку рисует loop(), а не задача AsyncWebServer: два писателя
+  // в один Canvas дают битый кадр.
+  if (SetupPortal::instance().takeDisplayTestRequest()) {
+    display::testPattern();
+    displayTestUntil = millis() + 2500;
+    return;
+  }
 
   if (displayTestUntil != 0) {
     if (static_cast<int32_t>(now - displayTestUntil) < 0) {
@@ -229,6 +244,18 @@ void drawScreen() {
     g_lastDrawMs = 0;
   }
 
+  if (SetupPortal::instance().showInfo()) {
+    if (g_lastDrawMs == 0 || static_cast<uint32_t>(now - g_lastDrawMs) >= 500) {
+      g_lastDrawMs = now;
+
+      drawPortalInfo(PORTAL_AP_SSID,
+                     Settings::instance().portalPassword(),
+                     WiFi.softAPIP().toString());
+    }
+
+    return;
+  }
+
   if (screen_index == SCREEN_GAME) {
     const float dt = (g_lastFrameMs == 0)
                          ? 0.0f
@@ -236,6 +263,12 @@ void drawScreen() {
 
     g_lastFrameMs = now;
     gameui::update(dt > 0.1f ? 0.1f : dt);
+
+    // Выход из игры переключает экран: кадр игры больше не рисуем.
+    if (screen_index != SCREEN_GAME) {
+      g_lastDrawMs = 0;
+      return;
+    }
 
     if (static_cast<uint32_t>(now - g_lastDrawMs) >= GAME_FRAME_MS) {
       g_lastDrawMs = now;

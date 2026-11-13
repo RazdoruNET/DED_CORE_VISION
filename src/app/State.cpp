@@ -74,7 +74,7 @@ int speed_draw = 0;
 int last_speed_sense = HIGH;
 uint32_t speed_meter_time = 0;
 uint32_t start_engin = 0;
-int mh = 0;
+uint32_t mh = 0;
 int odometr = 0;
 
 String optins_name[5] = {

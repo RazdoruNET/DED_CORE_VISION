@@ -20,6 +20,26 @@ int itemCount = 0;
 // чтобы этот же тап не запустил заезд.
 uint32_t s_startGuardUntil = 0;
 
+// Заявки тач-задачи. Массив предметов и состояние заезда живут в loop():
+// тач только выставляет заявку, иначе две задачи на разных ядрах портят
+// один и тот же items[] и полузаписанные float.
+volatile bool sEnterRequest = false;
+volatile bool sExitRequest = false;
+volatile bool sStartRequest = false;
+volatile int8_t sLaneRequest = -1;   // 0…2 — выбранная полоса, -1 — заявки нет
+volatile int8_t sSwipeRequest = 0;   // -1 влево, +1 вправо, 0 — заявки нет
+
+// Кнопки полос на верхней панели: по ним же считаются попадания тапа.
+constexpr int kLaneButtonX0 = 4;
+constexpr int kLaneButtonY = 28;
+constexpr int kLaneButtonW = 64;
+constexpr int kLaneButtonH = 20;
+constexpr int kLaneButtonGap = 70;
+
+int laneButtonX(int lane) {
+  return kLaneButtonX0 + lane * kLaneButtonGap;
+}
+
 // Центры полос: заводская game() ставит бокс машины в mot_x = 60 / 190 / 320
 // и рисует её шириной 100, значит центр — mot_x + 50.
 constexpr int kLaneX[3] = {110, 240, 370};
@@ -184,9 +204,11 @@ void drawItem(const GameItem &item) {
 
 }  // namespace
 
-namespace gameui {
+namespace {
 
-void attract() {
+// Внутренние действия над состоянием игры. Вызываются только из loop():
+// и через service(), и через физику кадра.
+void enterAttract() {
   game_mode = true;
   screen_index = SCREEN_GAME;
   runtime.screen = SCREEN_GAME;
@@ -205,12 +227,12 @@ void attract() {
   s_startGuardUntil = millis() + 400;
 }
 
-void begin() {
-  attract();
+void startRace() {
+  enterAttract();
   game_state = 1;
 }
 
-void exit() {
+void leaveGame() {
   // Выход из игры не должен терять новый рекорд.
   if (game_score_1 > game_best) {
     game_best = game_score_1;
@@ -224,7 +246,82 @@ void exit() {
   clearItems();
 }
 
+}  // namespace
+
+namespace gameui {
+
+void service() {
+  if (sExitRequest) {
+    sExitRequest = false;
+
+    if (screen_index == SCREEN_GAME) {
+      leaveGame();
+    }
+  } else if (sEnterRequest) {
+    sEnterRequest = false;
+    enterAttract();
+  }
+
+  if (screen_index != SCREEN_GAME) {
+    // Заявки, накопленные вне игры, не должны сработать при следующем входе.
+    sStartRequest = false;
+    sLaneRequest = -1;
+    sSwipeRequest = 0;
+    return;
+  }
+
+  if (sStartRequest) {
+    sStartRequest = false;
+
+    const bool guardOver = static_cast<int32_t>(millis() - s_startGuardUntil) >= 0;
+
+    if (guardOver && game_state != 1) {
+      startRace();
+    }
+  }
+
+  if (game_state != 1) {
+    sLaneRequest = -1;
+    sSwipeRequest = 0;
+    return;
+  }
+
+  if (sLaneRequest >= 0 && sLaneRequest <= 2) {
+    game_lane = sLaneRequest;
+  }
+
+  sLaneRequest = -1;
+
+  if (sSwipeRequest != 0) {
+    const int lane = game_lane + sSwipeRequest;
+
+    if (lane >= 0 && lane <= 2) {
+      game_lane = lane;
+    }
+  }
+
+  sSwipeRequest = 0;
+}
+
+void attract() {
+  sEnterRequest = true;
+}
+
+void begin() {
+  sStartRequest = true;
+}
+
+void exit() {
+  sExitRequest = true;
+}
+
 void update(float dt) {
+  service();
+
+  if (screen_index != SCREEN_GAME) {
+    return;
+  }
+
   if (game_state == 0) {
     // Приглашение: редкие предметы медленно ползут, чтобы дорога жила.
     game_spawn -= dt;
@@ -304,44 +401,26 @@ void update(float dt) {
 void handleTouch(int16_t x, int16_t y) {
   // Выход — правый верхний угол, в том числе с экрана приглашения.
   if (y < 26 && x > 425) {
-    exit();
-    return;
-  }
-
-  if (game_state == 0) {
-    if (static_cast<int32_t>(millis() - s_startGuardUntil) < 0) {
-      return;
-    }
-
-    begin();
-    return;
-  }
-
-  if (game_state == 2) {
-    begin();
+    sExitRequest = true;
     return;
   }
 
   // Полосы — те же три кнопки, что и карты на приборке.
-  if (y >= 26 && y <= 54 && x < 230) {
-    const int lane = x / 77;
+  for (int lane = 0; lane < 3; ++lane) {
+    const int left = laneButtonX(lane);
 
-    if (lane >= 0 && lane <= 2) {
-      game_lane = lane;
+    if (y >= kLaneButtonY && y < kLaneButtonY + kLaneButtonH && x >= left && x < left + kLaneButtonW) {
+      sLaneRequest = static_cast<int8_t>(lane);
+      return;
     }
   }
+
+  // Тап по дороге — старт или рестарт; состояние заезда проверит service().
+  sStartRequest = true;
 }
 
 void handleSwipe(int8_t direction) {
-  if (game_state != 1) {
-    return;
-  }
-
-  const int lane = game_lane + direction;
-
-  if (lane >= 0 && lane <= 2) {
-    game_lane = lane;
-  }
+  sSwipeRequest = direction;
 }
 
 void drawItems() {
@@ -389,11 +468,11 @@ void drawHud() {
   static const uint16_t kLaneColor[3] = {0x2480, BLUE, RED};
 
   for (int i = 0; i < 3; ++i) {
-    const int x = 4 + i * 70;
+    const int x = laneButtonX(i);
     const uint16_t fill = (game_lane == i) ? kLaneColor[i] : 0x2104;
 
-    gfx->fillRect(x, 28, 64, 20, fill);
-    gfx->drawRect(x, 28, 64, 20, WHITE);
+    gfx->fillRect(x, kLaneButtonY, kLaneButtonW, kLaneButtonH, fill);
+    gfx->drawRect(x, kLaneButtonY, kLaneButtonW, kLaneButtonH, WHITE);
 
     gfx->setTextSize(1);
     gfx->setTextColor(WHITE);

@@ -84,6 +84,10 @@ void speedMeterHandler() {
   const int senser = digitalRead(t_8);
 
   if (senser == HIGH && last_speed_sense != senser) {
+    // Фронт фиксируем до фильтра: иначе отброшенный дребезг обрабатывался
+    // повторно и удлинял измеряемый интервал.
+    last_speed_sense = HIGH;
+
     const uint32_t diff_pic = micros() - speed_meter_time;
 
     if (diff_pic > 10000) {
@@ -106,8 +110,6 @@ void speedMeterHandler() {
 
       speed = rpm_sp * dlinna;
       speed_meter_time = micros();
-
-      last_speed_sense = HIGH;
     }
   } else {
     last_speed_sense = senser;
